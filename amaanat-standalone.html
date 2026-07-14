@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Amaanat — Carried with trust</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+body { margin: 0; }
+.font-display { font-family: 'Fraunces', serif; }
+.font-body { font-family: 'Inter', sans-serif; }
+.font-mono { font-family: 'IBM Plex Mono', monospace; }
+.ticket-notch { position: relative; }
+.ticket-notch::before, .ticket-notch::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  background: #F3EDE1;
+  border-radius: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+.ticket-notch::before { top: -9px; }
+.ticket-notch::after { bottom: -9px; }
+.ticket-notch-h { position: relative; }
+.ticket-notch-h::before, .ticket-notch-h::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  background: #F3EDE1;
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+.ticket-notch-h::before { left: -9px; }
+.ticket-notch-h::after { right: -9px; }
+.dashline { border-left: 2px dashed #5B6B7C55; }
+.dashline-h { border-top: 2px dashed #5B6B7C55; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState } = React;
+
+// ---------- Hand-drawn icon set (no external icon library needed) ----------
+function makeIcon(children) {
+  return function Icon({ size = 16, color = "currentColor", className = "" }) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+        stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        className={className}>
+        {children}
+      </svg>
+    );
+  };
+}
+
+const Plane = makeIcon(<path d="M2 12l20-9-9 20-2-9-9-2z" />);
+const Package = makeIcon(<>
+  <path d="M21 8l-9-5-9 5 9 5 9-5z" />
+  <path d="M3 8v8l9 5 9-5V8" />
+  <path d="M12 13v8" />
+</>);
+const ShieldCheck = makeIcon(<>
+  <path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z" />
+  <path d="M9 12l2 2 4-4" />
+</>);
+const MapPin = makeIcon(<>
+  <path d="M12 21s7-7.5 7-12a7 7 0 10-14 0c0 4.5 7 12 7 12z" />
+  <circle cx="12" cy="9" r="2.5" />
+</>);
+const Calendar = makeIcon(<>
+  <rect x="3" y="5" width="18" height="16" rx="2" />
+  <line x1="3" y1="10" x2="21" y2="10" />
+  <line x1="8" y1="3" x2="8" y2="7" />
+  <line x1="16" y1="3" x2="16" y2="7" />
+</>);
+const DollarSign = makeIcon(<>
+  <line x1="12" y1="2" x2="12" y2="22" />
+  <path d="M17 6.5c0-2-2-3-5-3s-5 1.3-5 3 2 3 5 3 5 1.2 5 3-2 3-5 3-5-1-5-3" />
+</>);
+const Weight = makeIcon(<>
+  <circle cx="12" cy="14" r="7" />
+  <path d="M9 5h6l1 4H8l1-4z" />
+</>);
+const X = makeIcon(<>
+  <line x1="5" y1="5" x2="19" y2="19" />
+  <line x1="19" y1="5" x2="5" y2="19" />
+</>);
+const Check = makeIcon(<polyline points="4 12 9 17 20 6" />);
+const AlertTriangle = makeIcon(<>
+  <path d="M12 3l10 18H2L12 3z" />
+  <line x1="12" y1="9" x2="12" y2="14" />
+  <circle cx="12" cy="17.3" r="0.6" fill="currentColor" stroke="none" />
+</>);
+const ChevronRight = makeIcon(<polyline points="9 6 15 12 9 18" />);
+const User = makeIcon(<>
+  <circle cx="12" cy="8" r="4" />
+  <path d="M4 21c0-4.5 3.5-7 8-7s8 2.5 8 7" />
+</>);
+const Plus = makeIcon(<>
+  <line x1="12" y1="5" x2="12" y2="19" />
+  <line x1="5" y1="12" x2="19" y2="12" />
+</>);
+const ArrowLeft = makeIcon(<>
+  <line x1="19" y1="12" x2="5" y2="12" />
+  <polyline points="11 6 5 12 11 18" />
+</>);
+const ScrollText = makeIcon(<>
+  <path d="M6 3h11a2 2 0 012 2v13a2 2 0 01-2 2H8a2 2 0 01-2-2V5" />
+  <path d="M6 3a2 2 0 00-2 2v14a2 2 0 002 2" />
+  <line x1="9" y1="8" x2="15" y2="8" />
+  <line x1="9" y1="12" x2="15" y2="12" />
+</>);
+const Menu = makeIcon(<>
+  <line x1="4" y1="6" x2="20" y2="6" />
+  <line x1="4" y1="12" x2="20" y2="12" />
+  <line x1="4" y1="18" x2="20" y2="18" />
+</>);
+const Search = makeIcon(<>
+  <circle cx="11" cy="11" r="7" />
+  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+</>);
+
+
+// ---------- Design tokens ----------
+const C = {
+  ink: "#1C2B3A",
+  ink2: "#2B3F54",
+  amber: "#E3A542",
+  amberDark: "#C4872E",
+  parchment: "#F3EDE1",
+  parchment2: "#EAE2D2",
+  slate: "#5B6B7C",
+  cargo: "#3F7A5C",
+  rust: "#B44A32",
+  white: "#FFFFFF",
+};
+
+const FONTS = `
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+.font-display { font-family: 'Fraunces', serif; }
+.font-body { font-family: 'Inter', sans-serif; }
+.font-mono { font-family: 'IBM Plex Mono', monospace; }
+.ticket-notch { position: relative; }
+.ticket-notch::before, .ticket-notch::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  background: ${C.parchment};
+  border-radius: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+.ticket-notch::before { top: -9px; }
+.ticket-notch::after { bottom: -9px; }
+.ticket-notch-h { position: relative; }
+.ticket-notch-h::before, .ticket-notch-h::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  background: ${C.parchment};
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+.ticket-notch-h::before { left: -9px; }
+.ticket-notch-h::after { right: -9px; }
+.dashline { border-left: 2px dashed ${C.slate}55; }
+.dashline-h { border-top: 2px dashed ${C.slate}55; }
+`;
+
+// ---------- Mock data ----------
+const initialRequests = [
+  { id: 1, item: "Sealed box of ayurvedic medicines", category: "Medicine", weight: 2, weightUnit: "kg", value: 80, from: "Los Angeles, CA", to: "Mumbai, India", needBy: "2026-08-15", postedBy: "Zainab R.", notes: "Sealed by pharmacy, no loose liquids. Can meet at LAX." },
+  { id: 2, item: "Wedding gift — costume jewelry box", category: "Gifts", weight: 1, weightUnit: "kg", value: 150, from: "Chicago, IL", to: "Karachi, Pakistan", needBy: "2026-09-01", postedBy: "Hussain A.", notes: "Small, gift-wrapped, happy to open for inspection." },
+  { id: 3, item: "Dates and dry snacks for relatives", category: "Food (non-perishable)", weight: 3, weightUnit: "kg", value: 40, from: "Dallas, TX", to: "Colombo, Sri Lanka", needBy: "2026-08-20", postedBy: "Fatema M.", notes: "Vacuum sealed, no fresh produce." },
+  { id: 4, item: "Replacement phone screen + tools", category: "Electronics", weight: 0.5, weightUnit: "kg", value: 60, from: "Houston, TX", to: "Dubai, UAE", needBy: "2026-08-10", postedBy: "Ali S.", notes: "No loose lithium batteries included." },
+];
+
+const initialTrips = [
+  { id: 1, traveler: "Mustafa B.", from: "Los Angeles, CA", to: "Mumbai, India", date: "2026-08-14", capacity: "Up to 5 kg free space", verified: true },
+  { id: 2, traveler: "Sakina T.", from: "Chicago, IL", to: "Karachi, Pakistan", date: "2026-08-30", capacity: "Up to 3 kg free space", verified: true },
+  { id: 3, traveler: "Yusuf K.", from: "Dallas, TX", to: "Colombo, Sri Lanka", date: "2026-08-18", capacity: "Up to 8 kg free space", verified: false },
+];
+
+const PROHIBITED_ITEMS = [
+  "Loose lithium batteries or power banks not installed in a device",
+  "Flammable liquids, aerosols, or gases of any kind",
+  "Weapons, ammunition, or replica weapons",
+  "Undeclared cash or monetary instruments over $10,000 USD equivalent",
+  "Perishable food without proper sealed, customs-declarable packaging",
+  "Prescription medication without the original packaging or a prescription copy",
+  "Counterfeit or trademark-infringing goods",
+  "Live plants, seeds, or soil (restricted by most customs authorities)",
+  "Undeclared jewelry or precious metals above your destination's duty-free limit",
+];
+
+// ---------- Small building blocks ----------
+function Badge({ children, tone = "slate" }) {
+  const tones = {
+    slate: { bg: `${C.slate}1A`, color: C.slate },
+    amber: { bg: `${C.amber}26`, color: C.amberDark },
+    cargo: { bg: `${C.cargo}1F`, color: C.cargo },
+    rust: { bg: `${C.rust}1F`, color: C.rust },
+  };
+  const t = tones[tone];
+  return (
+    <span
+      className="font-mono text-xs px-2 py-1 rounded-full inline-flex items-center gap-1 whitespace-nowrap"
+      style={{ backgroundColor: t.bg, color: t.color }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function PrimaryButton({ children, onClick, type = "button", full, icon: Icon }) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      className={`font-body font-semibold text-sm px-5 py-2.5 rounded-lg inline-flex items-center justify-center gap-2 transition-transform hover:-translate-y-0.5 ${full ? "w-full" : ""}`}
+      style={{ backgroundColor: C.ink, color: C.parchment }}
+    >
+      {Icon && <Icon size={16} />}
+      {children}
+    </button>
+  );
+}
+
+function SecondaryButton({ children, onClick, full, icon: Icon }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`font-body font-medium text-sm px-5 py-2.5 rounded-lg inline-flex items-center justify-center gap-2 border transition-colors ${full ? "w-full" : ""}`}
+      style={{ borderColor: `${C.ink}33`, color: C.ink }}
+    >
+      {Icon && <Icon size={16} />}
+      {children}
+    </button>
+  );
+}
+
+// ---------- Nav ----------
+function NavBar({ page, setPage }) {
+  const [open, setOpen] = useState(false);
+  const links = [
+    { id: "browse", label: "Browse" },
+    { id: "postRequest", label: "Send a Parcel" },
+    { id: "postTrip", label: "Offer to Carry" },
+    { id: "dashboard", label: "Dashboard" },
+    { id: "rules", label: "Rules & Waiver" },
+  ];
+  return (
+    <div style={{ backgroundColor: C.ink }} className="w-full">
+      <div className="max-w-6xl mx-auto px-5 sm:px-6 py-4 flex items-center justify-between">
+        <button onClick={() => setPage("browse")} className="flex items-center gap-2">
+          <div style={{ backgroundColor: C.amber }} className="w-8 h-8 rounded-md flex items-center justify-center">
+            <Plane size={16} color={C.ink} />
+          </div>
+          <span className="font-display text-xl font-semibold" style={{ color: C.parchment }}>Amaanat</span>
+        </button>
+        <nav className="hidden md:flex items-center gap-1">
+          {links.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => setPage(l.id)}
+              className="font-body text-sm px-3 py-2 rounded-md transition-colors"
+              style={{
+                color: page === l.id ? C.ink : `${C.parchment}CC`,
+                backgroundColor: page === l.id ? C.amber : "transparent",
+              }}
+            >
+              {l.label}
+            </button>
+          ))}
+        </nav>
+        <button className="md:hidden" onClick={() => setOpen(!open)}>
+          <Menu size={22} color={C.parchment} />
+        </button>
+      </div>
+      {open && (
+        <div className="md:hidden px-5 pb-4 flex flex-col gap-1">
+          {links.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => { setPage(l.id); setOpen(false); }}
+              className="font-body text-sm px-3 py-2 rounded-md text-left"
+              style={{
+                color: page === l.id ? C.ink : `${C.parchment}CC`,
+                backgroundColor: page === l.id ? C.amber : "transparent",
+              }}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Ticket card ----------
+function RequestTicket({ req, onView }) {
+  return (
+    <div className="rounded-xl overflow-hidden shadow-sm border flex flex-col sm:flex-row" style={{ borderColor: `${C.slate}33`, backgroundColor: C.white }}>
+      <div className="p-5 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-mono text-xs mb-1" style={{ color: C.slate }}>PARCEL REQUEST · #{String(req.id).padStart(4, "0")}</p>
+            <h3 className="font-display text-lg font-semibold" style={{ color: C.ink }}>{req.item}</h3>
+          </div>
+          <Badge tone="amber">{req.category}</Badge>
+        </div>
+        <div className="flex items-center gap-2 mt-3 font-body text-sm" style={{ color: C.slate }}>
+          <MapPin size={14} />
+          <span>{req.from}</span>
+          <span className="flex-1 border-t border-dashed mx-1" style={{ borderColor: `${C.slate}55` }} />
+          <Plane size={14} />
+          <span className="flex-1 border-t border-dashed mx-1" style={{ borderColor: `${C.slate}55` }} />
+          <span>{req.to}</span>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Badge><Weight size={12} />{req.weight} {req.weightUnit}</Badge>
+          <Badge><DollarSign size={12} />{req.value} value</Badge>
+          <Badge><Calendar size={12} />Needed by {req.needBy}</Badge>
+        </div>
+      </div>
+      <div className="ticket-notch-h dashline sm:dashline-h flex sm:flex-col items-center justify-center gap-2 px-5 py-4 sm:w-40" style={{ backgroundColor: C.parchment2 }}>
+        <p className="font-mono text-xs text-center" style={{ color: C.slate }}>Posted by<br /><span className="font-semibold" style={{ color: C.ink }}>{req.postedBy}</span></p>
+        <button onClick={() => onView(req)} className="font-body text-sm font-semibold inline-flex items-center gap-1 mt-1" style={{ color: C.ink }}>
+          View <ChevronRight size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TripTicket({ trip }) {
+  return (
+    <div className="rounded-xl overflow-hidden shadow-sm border flex flex-col sm:flex-row" style={{ borderColor: `${C.slate}33`, backgroundColor: C.white }}>
+      <div className="p-5 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-mono text-xs mb-1" style={{ color: C.slate }}>TRAVELER · #{String(trip.id).padStart(4, "0")}</p>
+            <h3 className="font-display text-lg font-semibold flex items-center gap-2" style={{ color: C.ink }}>
+              {trip.traveler}
+              {trip.verified && <ShieldCheck size={16} color={C.cargo} />}
+            </h3>
+          </div>
+          <Badge tone={trip.verified ? "cargo" : "slate"}>{trip.verified ? "Community verified" : "Unverified"}</Badge>
+        </div>
+        <div className="flex items-center gap-2 mt-3 font-body text-sm" style={{ color: C.slate }}>
+          <MapPin size={14} />
+          <span>{trip.from}</span>
+          <span className="flex-1 border-t border-dashed mx-1" style={{ borderColor: `${C.slate}55` }} />
+          <Plane size={14} />
+          <span className="flex-1 border-t border-dashed mx-1" style={{ borderColor: `${C.slate}55` }} />
+          <span>{trip.to}</span>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Badge><Calendar size={12} />Departs {trip.date}</Badge>
+          <Badge><Package size={12} />{trip.capacity}</Badge>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Waiver Modal ----------
+function WaiverModal({ request, onClose, onAccept }) {
+  const [ack, setAck] = useState(false);
+  const [name, setName] = useState("");
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6" style={{ backgroundColor: "#00000066" }}>
+      <div className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl" style={{ backgroundColor: C.parchment }}>
+        <div className="p-6 border-b flex items-start justify-between" style={{ borderColor: `${C.slate}33` }}>
+          <div>
+            <p className="font-mono text-xs" style={{ color: C.slate }}>LIABILITY WAIVER · DRAFT</p>
+            <h3 className="font-display text-xl font-semibold" style={{ color: C.ink }}>Before you carry this parcel</h3>
+          </div>
+          <button onClick={onClose}><X size={20} color={C.slate} /></button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="rounded-lg p-4 flex gap-3" style={{ backgroundColor: `${C.rust}12` }}>
+            <AlertTriangle size={18} color={C.rust} className="shrink-0 mt-0.5" />
+            <p className="font-body text-sm" style={{ color: C.ink }}>
+              This text is placeholder legal language for prototyping only. It has not been reviewed by an attorney and must not be used with real users until it is.
+            </p>
+          </div>
+
+          <div className="font-body text-sm space-y-3" style={{ color: C.ink2 }}>
+            <p>By accepting, I confirm that:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>I have personally inspected this parcel and it does not contain anything on Amaanat's prohibited items list.</li>
+              <li>I am carrying this item voluntarily and am solely responsible for complying with airline, TSA, and customs rules for my specific route.</li>
+              <li>Amaanat is a matching platform only — it is not a shipping company and holds no responsibility for loss, damage, delay, seizure, or any legal consequence arising from carrying this item.</li>
+              <li>The requestor has disclosed the item's true weight, value, and contents to the best of their knowledge, and Amaanat is not liable for any misrepresentation.</li>
+              <li>I release the requestor, other travelers, and Amaanat from any claim related to this parcel.</li>
+            </ul>
+          </div>
+
+          <div className="rounded-lg p-4" style={{ backgroundColor: C.parchment2 }}>
+            <p className="font-mono text-xs mb-2" style={{ color: C.slate }}>QUICK REMINDER</p>
+            <p className="font-body text-sm" style={{ color: C.ink2 }}>Double-check current TSA/IATA and destination customs rules before you fly — regulations change and vary by airline. See the Rules & Waiver page for a starting checklist.</p>
+          </div>
+
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-1" />
+            <span className="font-body text-sm" style={{ color: C.ink }}>I have read and agree to the terms above.</span>
+          </label>
+
+          <div>
+            <label className="font-mono text-xs" style={{ color: C.slate }}>TYPE YOUR FULL NAME TO SIGN</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Full name"
+              className="w-full mt-1 rounded-lg px-3 py-2 font-body text-sm border outline-none"
+              style={{ borderColor: `${C.slate}55`, backgroundColor: C.white }}
+            />
+          </div>
+        </div>
+
+        <div className="p-6 border-t flex gap-3" style={{ borderColor: `${C.slate}33` }}>
+          <SecondaryButton onClick={onClose} full>Cancel</SecondaryButton>
+          <PrimaryButton full icon={Check} onClick={() => ack && name.trim() && onAccept(name)}>
+            Accept & Get Contact
+          </PrimaryButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Pages ----------
+function BrowsePage({ requests, trips, setPage, setSelectedRequest }) {
+  const [tab, setTab] = useState("requests");
+  const [query, setQuery] = useState("");
+
+  const filteredRequests = requests.filter(
+    (r) => r.from.toLowerCase().includes(query.toLowerCase()) || r.to.toLowerCase().includes(query.toLowerCase())
+  );
+  const filteredTrips = trips.filter(
+    (t) => t.from.toLowerCase().includes(query.toLowerCase()) || t.to.toLowerCase().includes(query.toLowerCase())
+  );
+
+  return (
+    <div>
+      <div style={{ backgroundColor: C.ink }}>
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 pt-14 pb-16">
+          <p className="font-mono text-xs mb-3" style={{ color: C.amber }}>A COMMUNITY CARGO BOARD</p>
+          <h1 className="font-display text-3xl sm:text-5xl font-semibold max-w-xl leading-tight" style={{ color: C.parchment }}>
+            Every trip is a chance to carry someone's amanah.
+          </h1>
+          <p className="font-body text-base mt-4 max-w-lg" style={{ color: `${C.parchment}B3` }}>
+            Amaanat connects people sending a parcel with community members already booked on that route — with a clear waiver and prohibited items checklist for every handoff.
+          </p>
+          <div className="flex flex-wrap gap-3 mt-7">
+            <PrimaryButton icon={Plus} onClick={() => setPage("postRequest")}>Send a Parcel</PrimaryButton>
+            <SecondaryButton icon={Plane} onClick={() => setPage("postTrip")}
+              full={false}
+            >
+              <span style={{ color: C.parchment }}>Offer to Carry</span>
+            </SecondaryButton>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-5 sm:px-6 -mt-8">
+        <div className="rounded-xl p-2 flex items-center gap-2 shadow-sm" style={{ backgroundColor: C.white, border: `1px solid ${C.slate}33` }}>
+          <Search size={16} color={C.slate} className="ml-2" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by city — e.g. Mumbai, Chicago, Dubai"
+            className="flex-1 font-body text-sm outline-none py-2"
+          />
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-5 sm:px-6 py-10">
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setTab("requests")}
+            className="font-body text-sm font-semibold px-4 py-2 rounded-full"
+            style={{ backgroundColor: tab === "requests" ? C.ink : "transparent", color: tab === "requests" ? C.parchment : C.ink, border: `1px solid ${C.ink}33` }}
+          >
+            Parcel requests ({filteredRequests.length})
+          </button>
+          <button
+            onClick={() => setTab("trips")}
+            className="font-body text-sm font-semibold px-4 py-2 rounded-full"
+            style={{ backgroundColor: tab === "trips" ? C.ink : "transparent", color: tab === "trips" ? C.parchment : C.ink, border: `1px solid ${C.ink}33` }}
+          >
+            Upcoming travelers ({filteredTrips.length})
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {tab === "requests" && filteredRequests.map((r) => (
+            <RequestTicket key={r.id} req={r} onView={(req) => { setSelectedRequest(req); setPage("requestDetail"); }} />
+          ))}
+          {tab === "trips" && filteredTrips.map((t) => <TripTicket key={t.id} trip={t} />)}
+          {tab === "requests" && filteredRequests.length === 0 && (
+            <EmptyState text="No parcel requests match that route yet. Be the first to post one." />
+          )}
+          {tab === "trips" && filteredTrips.length === 0 && (
+            <EmptyState text="No travelers on that route yet. Check back or post your own trip." />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ text }) {
+  return (
+    <div className="rounded-xl border border-dashed p-10 text-center" style={{ borderColor: `${C.slate}55` }}>
+      <p className="font-body text-sm" style={{ color: C.slate }}>{text}</p>
+    </div>
+  );
+}
+
+function FormShell({ title, eyebrow, onBack, children }) {
+  return (
+    <div className="max-w-2xl mx-auto px-5 sm:px-6 py-12">
+      <button onClick={onBack} className="font-body text-sm inline-flex items-center gap-1 mb-6" style={{ color: C.slate }}>
+        <ArrowLeft size={14} /> Back to browse
+      </button>
+      <p className="font-mono text-xs mb-2" style={{ color: C.amberDark }}>{eyebrow}</p>
+      <h1 className="font-display text-3xl font-semibold mb-8" style={{ color: C.ink }}>{title}</h1>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div className="mb-5">
+      <label className="font-mono text-xs block mb-1.5" style={{ color: C.slate }}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+const inputStyle = {
+  borderColor: `${C.slate}55`,
+  backgroundColor: C.white,
+};
+const inputClass = "w-full rounded-lg px-3 py-2.5 font-body text-sm border outline-none";
+
+function PostRequestPage({ onSubmit, onBack }) {
+  const [form, setForm] = useState({
+    item: "", category: "Documents", weight: "", weightUnit: "kg", value: "",
+    from: "", to: "", needBy: "", notes: "",
+  });
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.item || !form.from || !form.to) return;
+    onSubmit({ ...form, weight: Number(form.weight) || 0, value: Number(form.value) || 0, postedBy: "You" });
+  };
+
+  return (
+    <FormShell eyebrow="POST A PARCEL REQUEST" title="Describe what you'd like carried" onBack={onBack}>
+      <form onSubmit={handleSubmit}>
+        <Field label="ITEM DESCRIPTION">
+          <input required value={form.item} onChange={set("item")} placeholder="e.g. Sealed box of medicine" className={inputClass} style={inputStyle} />
+        </Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="CATEGORY">
+            <select value={form.category} onChange={set("category")} className={inputClass} style={inputStyle}>
+              {["Documents", "Electronics", "Clothing / Textiles", "Food (non-perishable)", "Medicine", "Gifts", "Other"].map((c) => <option key={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field label="NEEDED BY">
+            <input type="date" value={form.needBy} onChange={set("needBy")} className={inputClass} style={inputStyle} />
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="WEIGHT (KG)">
+            <input required type="number" min="0" step="0.1" value={form.weight} onChange={set("weight")} placeholder="2" className={inputClass} style={inputStyle} />
+          </Field>
+          <Field label="ESTIMATED VALUE (USD)">
+            <input required type="number" min="0" value={form.value} onChange={set("value")} placeholder="80" className={inputClass} style={inputStyle} />
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="FROM (CITY)">
+            <input required value={form.from} onChange={set("from")} placeholder="Los Angeles, CA" className={inputClass} style={inputStyle} />
+          </Field>
+          <Field label="TO (CITY)">
+            <input required value={form.to} onChange={set("to")} placeholder="Mumbai, India" className={inputClass} style={inputStyle} />
+          </Field>
+        </div>
+        <Field label="NOTES FOR THE TRAVELER">
+          <textarea value={form.notes} onChange={set("notes")} rows={3} placeholder="Packaging, meetup preference, anything they should know" className={inputClass} style={inputStyle} />
+        </Field>
+
+        <div className="rounded-lg p-4 flex gap-3 mb-6" style={{ backgroundColor: `${C.amber}1F` }}>
+          <ShieldCheck size={18} color={C.amberDark} className="shrink-0 mt-0.5" />
+          <p className="font-body text-sm" style={{ color: C.ink }}>
+            Every traveler who offers to carry this will review our prohibited items checklist and sign a waiver before your contact details are shared.
+          </p>
+        </div>
+
+        <PrimaryButton type="submit" full icon={Check}>Post Request</PrimaryButton>
+      </form>
+    </FormShell>
+  );
+}
+
+function PostTripPage({ onSubmit, onBack }) {
+  const [form, setForm] = useState({ traveler: "You", from: "", to: "", date: "", capacity: "" });
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.from || !form.to || !form.date) return;
+    onSubmit({ ...form, verified: false });
+  };
+
+  return (
+    <FormShell eyebrow="OFFER TO CARRY" title="Share your upcoming trip" onBack={onBack}>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="FROM (CITY)">
+            <input required value={form.from} onChange={set("from")} placeholder="Chicago, IL" className={inputClass} style={inputStyle} />
+          </Field>
+          <Field label="TO (CITY)">
+            <input required value={form.to} onChange={set("to")} placeholder="Karachi, Pakistan" className={inputClass} style={inputStyle} />
+          </Field>
+        </div>
+        <Field label="DEPARTURE DATE">
+          <input required type="date" value={form.date} onChange={set("date")} className={inputClass} style={inputStyle} />
+        </Field>
+        <Field label="SPARE CAPACITY">
+          <input value={form.capacity} onChange={set("capacity")} placeholder="e.g. Up to 5 kg free space" className={inputClass} style={inputStyle} />
+        </Field>
+
+        <div className="rounded-lg p-4 flex gap-3 mb-6" style={{ backgroundColor: `${C.cargo}1A` }}>
+          <ShieldCheck size={18} color={C.cargo} className="shrink-0 mt-0.5" />
+          <p className="font-body text-sm" style={{ color: C.ink }}>
+            You'll always review the item and sign a waiver before agreeing to carry anything — posting a trip doesn't commit you to a specific parcel.
+          </p>
+        </div>
+
+        <PrimaryButton type="submit" full icon={Check}>Post Trip</PrimaryButton>
+      </form>
+    </FormShell>
+  );
+}
+
+function RequestDetailPage({ request, onBack, onMatch, matched }) {
+  const [waiverOpen, setWaiverOpen] = useState(false);
+  const [revealed, setRevealed] = useState(matched);
+
+  if (!request) return null;
+
+  return (
+    <div className="max-w-2xl mx-auto px-5 sm:px-6 py-12">
+      <button onClick={onBack} className="font-body text-sm inline-flex items-center gap-1 mb-6" style={{ color: C.slate }}>
+        <ArrowLeft size={14} /> Back to browse
+      </button>
+
+      <div className="rounded-xl overflow-hidden border" style={{ borderColor: `${C.slate}33`, backgroundColor: C.white }}>
+        <div className="p-6" style={{ backgroundColor: C.ink }}>
+          <p className="font-mono text-xs mb-1" style={{ color: C.amber }}>PARCEL REQUEST · #{String(request.id).padStart(4, "0")}</p>
+          <h1 className="font-display text-2xl font-semibold" style={{ color: C.parchment }}>{request.item}</h1>
+        </div>
+
+        <div className="p-6 space-y-5">
+          <div className="flex items-center gap-2 font-body text-sm" style={{ color: C.slate }}>
+            <MapPin size={14} /><span>{request.from}</span>
+            <span className="flex-1 border-t border-dashed mx-1" style={{ borderColor: `${C.slate}55` }} />
+            <Plane size={14} />
+            <span className="flex-1 border-t border-dashed mx-1" style={{ borderColor: `${C.slate}55` }} />
+            <span>{request.to}</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg p-3 text-center" style={{ backgroundColor: C.parchment }}>
+              <Weight size={16} className="mx-auto mb-1" color={C.ink} />
+              <p className="font-mono text-xs" style={{ color: C.slate }}>WEIGHT</p>
+              <p className="font-body text-sm font-semibold" style={{ color: C.ink }}>{request.weight} {request.weightUnit}</p>
+            </div>
+            <div className="rounded-lg p-3 text-center" style={{ backgroundColor: C.parchment }}>
+              <DollarSign size={16} className="mx-auto mb-1" color={C.ink} />
+              <p className="font-mono text-xs" style={{ color: C.slate }}>VALUE</p>
+              <p className="font-body text-sm font-semibold" style={{ color: C.ink }}>${request.value}</p>
+            </div>
+            <div className="rounded-lg p-3 text-center" style={{ backgroundColor: C.parchment }}>
+              <Calendar size={16} className="mx-auto mb-1" color={C.ink} />
+              <p className="font-mono text-xs" style={{ color: C.slate }}>NEEDED BY</p>
+              <p className="font-body text-sm font-semibold" style={{ color: C.ink }}>{request.needBy}</p>
+            </div>
+          </div>
+
+          {request.notes && (
+            <div>
+              <p className="font-mono text-xs mb-1" style={{ color: C.slate }}>NOTES FROM REQUESTOR</p>
+              <p className="font-body text-sm" style={{ color: C.ink2 }}>{request.notes}</p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 font-body text-sm" style={{ color: C.slate }}>
+            <User size={14} /> Posted by <span className="font-semibold" style={{ color: C.ink }}>{request.postedBy}</span>
+          </div>
+
+          {!revealed ? (
+            <PrimaryButton full icon={ShieldCheck} onClick={() => setWaiverOpen(true)}>Offer to Carry</PrimaryButton>
+          ) : (
+            <div className="rounded-lg p-4" style={{ backgroundColor: `${C.cargo}1A` }}>
+              <p className="font-mono text-xs mb-2" style={{ color: C.cargo }}>WAIVER SIGNED — CONTACT UNLOCKED</p>
+              <p className="font-body text-sm" style={{ color: C.ink }}>Reach {request.postedBy.split(" ")[0]} directly to arrange the handoff:</p>
+              <p className="font-mono text-sm mt-2" style={{ color: C.ink }}>+1 (555) 019-2231 · {request.postedBy.toLowerCase().replace(" ", ".")}@example.com</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {waiverOpen && (
+        <WaiverModal
+          request={request}
+          onClose={() => setWaiverOpen(false)}
+          onAccept={(name) => { setWaiverOpen(false); setRevealed(true); onMatch(request, name); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function DashboardPage({ requests, trips, matches, setPage }) {
+  const myRequests = requests.filter((r) => r.postedBy === "You");
+  const myTrips = trips.filter((t) => t.traveler === "You");
+
+  return (
+    <div className="max-w-5xl mx-auto px-5 sm:px-6 py-12">
+      <p className="font-mono text-xs mb-2" style={{ color: C.amberDark }}>YOUR ACTIVITY</p>
+      <h1 className="font-display text-3xl font-semibold mb-8" style={{ color: C.ink }}>Dashboard</h1>
+
+      <DashSection title="My parcel requests" empty="You haven't posted a parcel request yet." onAdd={() => setPage("postRequest")} addLabel="Send a parcel">
+        {myRequests.map((r) => (
+          <div key={r.id} className="flex items-center justify-between py-3 border-b last:border-0" style={{ borderColor: `${C.slate}22` }}>
+            <div>
+              <p className="font-body text-sm font-semibold" style={{ color: C.ink }}>{r.item}</p>
+              <p className="font-mono text-xs" style={{ color: C.slate }}>{r.from} → {r.to}</p>
+            </div>
+            <Badge tone="amber">Open</Badge>
+          </div>
+        ))}
+      </DashSection>
+
+      <DashSection title="My trips" empty="You haven't posted an upcoming trip yet." onAdd={() => setPage("postTrip")} addLabel="Offer to carry">
+        {myTrips.map((t) => (
+          <div key={t.id} className="flex items-center justify-between py-3 border-b last:border-0" style={{ borderColor: `${C.slate}22` }}>
+            <div>
+              <p className="font-body text-sm font-semibold" style={{ color: C.ink }}>{t.from} → {t.to}</p>
+              <p className="font-mono text-xs" style={{ color: C.slate }}>Departs {t.date}</p>
+            </div>
+            <Badge tone="cargo">Open</Badge>
+          </div>
+        ))}
+      </DashSection>
+
+      <DashSection title="My matches" empty="No matches yet — offer to carry a parcel or wait for a traveler to accept yours.">
+        {matches.map((m, i) => (
+          <div key={i} className="flex items-center justify-between py-3 border-b last:border-0" style={{ borderColor: `${C.slate}22` }}>
+            <div>
+              <p className="font-body text-sm font-semibold" style={{ color: C.ink }}>{m.request.item}</p>
+              <p className="font-mono text-xs" style={{ color: C.slate }}>Waiver signed by {m.signedBy}</p>
+            </div>
+            <Badge tone="cargo"><Check size={12} />Matched</Badge>
+          </div>
+        ))}
+      </DashSection>
+    </div>
+  );
+}
+
+function DashSection({ title, children, empty, onAdd, addLabel }) {
+  const hasChildren = React.Children.count(children) > 0 && children;
+  const isEmpty = !hasChildren;
+  return (
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-display text-lg font-semibold" style={{ color: C.ink }}>{title}</h2>
+        {onAdd && <button onClick={onAdd} className="font-body text-xs font-semibold inline-flex items-center gap-1" style={{ color: C.amberDark }}><Plus size={14} />{addLabel}</button>}
+      </div>
+      <div className="rounded-xl border p-5" style={{ borderColor: `${C.slate}33`, backgroundColor: C.white }}>
+        {isEmpty ? <p className="font-body text-sm" style={{ color: C.slate }}>{empty}</p> : children}
+      </div>
+    </div>
+  );
+}
+
+function RulesPage() {
+  return (
+    <div className="max-w-2xl mx-auto px-5 sm:px-6 py-12">
+      <p className="font-mono text-xs mb-2" style={{ color: C.amberDark }}>BEFORE YOU POST OR CARRY</p>
+      <h1 className="font-display text-3xl font-semibold mb-6" style={{ color: C.ink }}>Rules, prohibited items & waiver</h1>
+
+      <div className="rounded-lg p-4 flex gap-3 mb-8" style={{ backgroundColor: `${C.rust}12` }}>
+        <AlertTriangle size={18} color={C.rust} className="shrink-0 mt-0.5" />
+        <p className="font-body text-sm" style={{ color: C.ink }}>
+          This checklist is general guidance, not legal or regulatory advice. Airline and customs rules change and vary by carrier, aircraft, and destination — always verify with your specific airline and the destination country's customs authority before you fly.
+        </p>
+      </div>
+
+      <h2 className="font-display text-xl font-semibold mb-3" style={{ color: C.ink }}>Never accept these items</h2>
+      <div className="rounded-xl border p-5 mb-8" style={{ borderColor: `${C.slate}33`, backgroundColor: C.white }}>
+        <ul className="space-y-3">
+          {PROHIBITED_ITEMS.map((item, i) => (
+            <li key={i} className="flex items-start gap-3 font-body text-sm" style={{ color: C.ink2 }}>
+              <X size={16} color={C.rust} className="shrink-0 mt-0.5" />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <h2 className="font-display text-xl font-semibold mb-3" style={{ color: C.ink }}>How the waiver works</h2>
+      <div className="rounded-xl border p-5 mb-8" style={{ borderColor: `${C.slate}33`, backgroundColor: C.white }}>
+        <p className="font-body text-sm mb-3" style={{ color: C.ink2 }}>
+          Before any contact details are exchanged, the traveler reviews the item and digitally signs a waiver confirming they've inspected the parcel, accept sole responsibility for complying with airline and customs rules, and release the requestor and Amaanat from liability for loss, damage, delay, or seizure.
+        </p>
+        <p className="font-body text-sm" style={{ color: C.ink2 }}>
+          Every acceptance is timestamped and stored so both sides have a record of what was agreed.
+        </p>
+      </div>
+
+      <div className="rounded-lg p-4 flex gap-3" style={{ backgroundColor: `${C.amber}1F` }}>
+        <ScrollText size={18} color={C.amberDark} className="shrink-0 mt-0.5" />
+        <p className="font-body text-sm" style={{ color: C.ink }}>
+          The full waiver text shown at match time is a draft for prototyping. It should be reviewed by a licensed attorney before this app is used with real parcels.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ---------- App ----------
+function App() {
+  const [page, setPage] = useState("browse");
+  const [requests, setRequests] = useState(initialRequests);
+  const [trips, setTrips] = useState(initialTrips);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [matches, setMatches] = useState([]);
+
+  const handleAddRequest = (req) => {
+    const newReq = { ...req, id: requests.length + 1 };
+    setRequests([newReq, ...requests]);
+    setPage("dashboard");
+  };
+
+  const handleAddTrip = (trip) => {
+    const newTrip = { ...trip, id: trips.length + 1 };
+    setTrips([newTrip, ...trips]);
+    setPage("dashboard");
+  };
+
+  const handleMatch = (request, signedBy) => {
+    setMatches([...matches, { request, signedBy }]);
+  };
+
+  return (
+    <div className="min-h-screen font-body" style={{ backgroundColor: C.parchment }}>
+      <style>{FONTS}</style>
+      <NavBar page={page} setPage={setPage} />
+
+      {page === "browse" && (
+        <BrowsePage requests={requests} trips={trips} setPage={setPage} setSelectedRequest={setSelectedRequest} />
+      )}
+      {page === "postRequest" && <PostRequestPage onSubmit={handleAddRequest} onBack={() => setPage("browse")} />}
+      {page === "postTrip" && <PostTripPage onSubmit={handleAddTrip} onBack={() => setPage("browse")} />}
+      {page === "requestDetail" && (
+        <RequestDetailPage
+          request={selectedRequest}
+          onBack={() => setPage("browse")}
+          onMatch={handleMatch}
+          matched={matches.some((m) => m.request.id === selectedRequest?.id)}
+        />
+      )}
+      {page === "dashboard" && <DashboardPage requests={requests} trips={trips} matches={matches} setPage={setPage} />}
+      {page === "rules" && <RulesPage />}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
